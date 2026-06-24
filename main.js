@@ -1,5 +1,5 @@
 import './style.css'
-
+ 
 const STORAGE_KEY = 'expense-tracker-transactions'
 
 let transactions = []
