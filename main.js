@@ -7,7 +7,11 @@ let transactions = []
 const loadTransactions = () => {
   const data = localStorage.getItem(STORAGE_KEY)
   if (data) {
-    transactions = JSON.parse(data)
+    try {
+      transactions = JSON.parse(data)
+    } catch {
+      transactions = []
+    }
   }
 }
 
@@ -52,6 +56,15 @@ const updateSummary = () => {
   if (balanceEl) balanceEl.textContent = formatCurrency(balance)
   if (incomeEl) incomeEl.textContent = formatCurrency(income)
   if (expenseEl) expenseEl.textContent = formatCurrency(expense)
+}
+
+const updateChart = () => {
+  const { income, expense } = calculateTotals()
+  const incomeBar = document.querySelector('[data-chart-income]')
+  const expenseBar = document.querySelector('[data-chart-expense]')
+  const max = Math.max(income, expense, 1)
+  if (incomeBar) incomeBar.style.height = `${(income / max) * 100}%`
+  if (expenseBar) expenseBar.style.height = `${(expense / max) * 100}%`
 }
 
 const renderTransactions = (filter = 'all') => {
@@ -111,6 +124,7 @@ const addTransaction = (e) => {
   transactions.push(transaction)
   saveTransactions()
   updateSummary()
+  updateChart()
   const filter = document.querySelector('[data-filter]').value
   renderTransactions(filter)
   e.target.reset()
@@ -120,6 +134,7 @@ const deleteTransaction = (id) => {
   transactions = transactions.filter((t) => t.id !== id)
   saveTransactions()
   updateSummary()
+  updateChart()
   const filter = document.querySelector('[data-filter]').value
   renderTransactions(filter)
 }
@@ -139,53 +154,8 @@ const setupEventListeners = () => {
 
 const initApp = () => {
   loadTransactions()
-  document.querySelector('#app').innerHTML = `
-    <div class="app">
-      <header>
-        <h1>Expense Tracker</h1>
-      </header>
-      <section class="summary">
-        <div class="card balance">
-          <span class="label">Total Balance</span>
-          <span class="value" data-balance>$0.00</span>
-        </div>
-        <div class="card income">
-          <span class="label">Total Income</span>
-          <span class="value" data-income>$0.00</span>
-        </div>
-        <div class="card expense">
-          <span class="label">Total Expenses</span>
-          <span class="value" data-expense>$0.00</span>
-        </div>
-      </section>
-      <section class="form-section">
-        <h2>Add Transaction</h2>
-        <form data-form class="transaction-form">
-          <input type="text" data-title placeholder="Title" required />
-          <input type="number" data-amount placeholder="Amount" min="0.01" step="0.01" required />
-          <select data-type>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-          </select>
-          <button type="submit">Add Transaction</button>
-        </form>
-      </section>
-      <section class="transactions-section">
-        <div class="transactions-header">
-          <h2>Transactions</h2>
-          <select data-filter class="filter-select">
-            <option value="all">All</option>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-          </select>
-        </div>
-        <div class="transactions-list" data-transactions-list>
-          <div class="empty-state">No transactions yet.</div>
-        </div>
-      </section>
-    </div>
-  `
   updateSummary()
+  updateChart()
   renderTransactions()
   setupEventListeners()
 }
